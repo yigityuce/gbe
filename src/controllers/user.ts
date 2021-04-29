@@ -1,13 +1,8 @@
-import async from "async";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
-import passport from "passport";
 import { User, UserDocument, AuthToken } from "../models/User";
 import { Request, Response, NextFunction } from "express";
-import { IVerifyOptions } from "passport-local";
 import { WriteError } from "mongodb";
 import { check, sanitize, validationResult } from "express-validator";
-import "../config/passport";
 import { CallbackError, NativeError } from "mongoose";
 
 /**
@@ -39,18 +34,18 @@ export const postLogin = async (req: Request, res: Response, next: NextFunction)
         return res.redirect("/login");
     }
 
-    passport.authenticate("local", (err: Error, user: UserDocument, info: IVerifyOptions) => {
-        if (err) { return next(err); }
-        if (!user) {
-            req.flash("errors", {msg: info.message});
-            return res.redirect("/login");
-        }
-        req.logIn(user, (err) => {
-            if (err) { return next(err); }
-            req.flash("success", { msg: "Success! You are logged in." });
-            res.redirect(req.session.returnTo || "/");
-        });
-    })(req, res, next);
+    // passport.authenticate("local", (err: Error, user: UserDocument, info: IVerifyOptions) => {
+    //     if (err) { return next(err); }
+    //     if (!user) {
+    //         req.flash("errors", {msg: info.message});
+    //         return res.redirect("/login");
+    //     }
+    //     req.logIn(user, (err) => {
+    //         if (err) { return next(err); }
+    //         req.flash("success", { msg: "Success! You are logged in." });
+    //         res.redirect(req.session.returnTo || "/");
+    //     });
+    // })(req, res, next);
 };
 
 /**
@@ -260,51 +255,51 @@ export const postReset = async (req: Request, res: Response, next: NextFunction)
         return res.redirect("back");
     }
 
-    async.waterfall([
-        function resetPassword(done: (err: any, user: UserDocument) => void) {
-            User
-                .findOne({ passwordResetToken: req.params.token })
-                .where("passwordResetExpires").gt(Date.now())
-                .exec((err, user: any) => {
-                    if (err) { return next(err); }
-                    if (!user) {
-                        req.flash("errors", { msg: "Password reset token is invalid or has expired." });
-                        return res.redirect("back");
-                    }
-                    user.password = req.body.password;
-                    user.passwordResetToken = undefined;
-                    user.passwordResetExpires = undefined;
-                    user.save((err: WriteError) => {
-                        if (err) { return next(err); }
-                        req.logIn(user, (err) => {
-                            done(err, user);
-                        });
-                    });
-                });
-        },
-        function sendResetPasswordEmail(user: UserDocument, done: (err: Error) => void) {
-            const transporter = nodemailer.createTransport({
-                service: "SendGrid",
-                auth: {
-                    user: process.env.SENDGRID_USER,
-                    pass: process.env.SENDGRID_PASSWORD
-                }
-            });
-            const mailOptions = {
-                to: user.email,
-                from: "express-ts@starter.com",
-                subject: "Your password has been changed",
-                text: `Hello,\n\nThis is a confirmation that the password for your account ${user.email} has just been changed.\n`
-            };
-            transporter.sendMail(mailOptions, (err) => {
-                req.flash("success", { msg: "Success! Your password has been changed." });
-                done(err);
-            });
-        }
-    ], (err) => {
-        if (err) { return next(err); }
-        res.redirect("/");
-    });
+    // async.waterfall([
+    //     function resetPassword(done: (err: any, user: UserDocument) => void) {
+    //         User
+    //             .findOne({ passwordResetToken: req.params.token })
+    //             .where("passwordResetExpires").gt(Date.now())
+    //             .exec((err, user: any) => {
+    //                 if (err) { return next(err); }
+    //                 if (!user) {
+    //                     req.flash("errors", { msg: "Password reset token is invalid or has expired." });
+    //                     return res.redirect("back");
+    //                 }
+    //                 user.password = req.body.password;
+    //                 user.passwordResetToken = undefined;
+    //                 user.passwordResetExpires = undefined;
+    //                 user.save((err: WriteError) => {
+    //                     if (err) { return next(err); }
+    //                     req.logIn(user, (err) => {
+    //                         done(err, user);
+    //                     });
+    //                 });
+    //             });
+    //     },
+    //     function sendResetPasswordEmail(user: UserDocument, done: (err: Error) => void) {
+    //         const transporter = nodemailer.createTransport({
+    //             service: "SendGrid",
+    //             auth: {
+    //                 user: process.env.SENDGRID_USER,
+    //                 pass: process.env.SENDGRID_PASSWORD
+    //             }
+    //         });
+    //         const mailOptions = {
+    //             to: user.email,
+    //             from: "express-ts@starter.com",
+    //             subject: "Your password has been changed",
+    //             text: `Hello,\n\nThis is a confirmation that the password for your account ${user.email} has just been changed.\n`
+    //         };
+    //         transporter.sendMail(mailOptions, (err) => {
+    //             req.flash("success", { msg: "Success! Your password has been changed." });
+    //             done(err);
+    //         });
+    //     }
+    // ], (err) => {
+    //     if (err) { return next(err); }
+    //     res.redirect("/");
+    // });
 };
 
 /**
@@ -335,51 +330,51 @@ export const postForgot = async (req: Request, res: Response, next: NextFunction
         return res.redirect("/forgot");
     }
 
-    async.waterfall([
-        function createRandomToken(done: (err: Error, token: string) => void) {
-            crypto.randomBytes(16, (err, buf) => {
-                const token = buf.toString("hex");
-                done(err, token);
-            });
-        },
-        function setRandomToken(token: AuthToken, done: (err: NativeError | WriteError, token?: AuthToken, user?: UserDocument) => void) {
-            User.findOne({ email: req.body.email }, (err: NativeError, user: any) => {
-                if (err) { return done(err); }
-                if (!user) {
-                    req.flash("errors", { msg: "Account with that email address does not exist." });
-                    return res.redirect("/forgot");
-                }
-                user.passwordResetToken = token;
-                user.passwordResetExpires = Date.now() + 3600000; // 1 hour
-                user.save((err: WriteError) => {
-                    done(err, token, user);
-                });
-            });
-        },
-        function sendForgotPasswordEmail(token: AuthToken, user: UserDocument, done: (err: Error) => void) {
-            const transporter = nodemailer.createTransport({
-                service: "SendGrid",
-                auth: {
-                    user: process.env.SENDGRID_USER,
-                    pass: process.env.SENDGRID_PASSWORD
-                }
-            });
-            const mailOptions = {
-                to: user.email,
-                from: "hackathon@starter.com",
-                subject: "Reset your password on Hackathon Starter",
-                text: `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
-          Please click on the following link, or paste this into your browser to complete the process:\n\n
-          http://${req.headers.host}/reset/${token}\n\n
-          If you did not request this, please ignore this email and your password will remain unchanged.\n`
-            };
-            transporter.sendMail(mailOptions, (err) => {
-                req.flash("info", { msg: `An e-mail has been sent to ${user.email} with further instructions.` });
-                done(err);
-            });
-        }
-    ], (err) => {
-        if (err) { return next(err); }
-        res.redirect("/forgot");
-    });
+    // async.waterfall([
+    //     function createRandomToken(done: (err: Error, token: string) => void) {
+    //         crypto.randomBytes(16, (err, buf) => {
+    //             const token = buf.toString("hex");
+    //             done(err, token);
+    //         });
+    //     },
+    //     function setRandomToken(token: AuthToken, done: (err: NativeError | WriteError, token?: AuthToken, user?: UserDocument) => void) {
+    //         User.findOne({ email: req.body.email }, (err: NativeError, user: any) => {
+    //             if (err) { return done(err); }
+    //             if (!user) {
+    //                 req.flash("errors", { msg: "Account with that email address does not exist." });
+    //                 return res.redirect("/forgot");
+    //             }
+    //             user.passwordResetToken = token;
+    //             user.passwordResetExpires = Date.now() + 3600000; // 1 hour
+    //             user.save((err: WriteError) => {
+    //                 done(err, token, user);
+    //             });
+    //         });
+    //     },
+    //     function sendForgotPasswordEmail(token: AuthToken, user: UserDocument, done: (err: Error) => void) {
+    //         const transporter = nodemailer.createTransport({
+    //             service: "SendGrid",
+    //             auth: {
+    //                 user: process.env.SENDGRID_USER,
+    //                 pass: process.env.SENDGRID_PASSWORD
+    //             }
+    //         });
+    //         const mailOptions = {
+    //             to: user.email,
+    //             from: "hackathon@starter.com",
+    //             subject: "Reset your password on Hackathon Starter",
+    //             text: `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
+    //       Please click on the following link, or paste this into your browser to complete the process:\n\n
+    //       http://${req.headers.host}/reset/${token}\n\n
+    //       If you did not request this, please ignore this email and your password will remain unchanged.\n`
+    //         };
+    //         transporter.sendMail(mailOptions, (err) => {
+    //             req.flash("info", { msg: `An e-mail has been sent to ${user.email} with further instructions.` });
+    //             done(err);
+    //         });
+    //     }
+    // ], (err) => {
+    //     if (err) { return next(err); }
+    //     res.redirect("/forgot");
+    // });
 };
