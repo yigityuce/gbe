@@ -20,4 +20,4 @@ jobs:
               env:
                   HD_NODE_ENV: production
                   HD_DB_URI: ${{secrets.DB_URI}}
-                  HD_API_VERSION: v2
+                  HD_API_VERSION: v1
