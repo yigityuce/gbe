@@ -16,7 +16,7 @@ npm run i
 2. Create/edit environment variables
 
 - Either `.env.example` file can be editted or new environment file named `.env` can be created
-- `DB_URI` env variable **must be set** valid mongodb instance
+- `DB_URI` env variable **must be set** to valid mongodb instance
 - `API_VERSION` env variable can be set
 - `PORT` env variable can be set
 
@@ -28,7 +28,7 @@ npm run start:dev
 
 
 # Implementation Details
-- For sure **Typescript**
+- For sure **Typescript** is used
 - Directory structure is organised by "package-by-layer" approach
   - I personally would prefer "package-by-feature" which is more suitable for bigger projects
 - CI/CD is setup with Github Actions
@@ -41,7 +41,7 @@ npm run start:dev
   - DTO (Data Transfer Objects): `src/dto`
 - Endpoints are documented with **swagger**
   - https://mighty-harbor-96884.herokuapp.com/api-docs
-- API versioning is done with environment variable named `API_VERSION`
+- API versioning is done by environment variable named `API_VERSION`
 - Annotation based libraries picked on top of [express.js](https://expressjs.com/) such as:
   - Annotation based routing: [routing-controllers](https://github.com/typestack/routing-controllers)
   - Dependency Injection: [typedi](https://github.com/typestack/typedi)

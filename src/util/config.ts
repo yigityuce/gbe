@@ -5,14 +5,10 @@ import fs from 'fs';
 if (fs.existsSync('.env')) {
 	logger.debug('Using .env file to supply config environment variables');
 	dotenv.config({ path: '.env' });
-	console.log('using env');
 } else {
 	logger.debug('Using .env.example file to supply config environment variables');
 	dotenv.config({ path: '.env.example' });
-	console.log('using example env');
 }
-
-console.log(process.env);
 
 export const ENVIRONMENT = process.env.NODE_ENV;
 export const IS_DEV = ENVIRONMENT !== 'production';

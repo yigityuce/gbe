@@ -16,7 +16,7 @@
 		"start": "node dist/main.js",
 		"start:dev": "npm-run-all build -p build:watch start:debug",
 		"start:debug": "nodemon --inspect dist/main.js --watch dist",
-		"test": "jest --forceExit --coverage --verbose",
+		"test": "jest --coverage --verbose --detectOpenHandles",
 		"test:watch": "npm run test -- --watchAll",
 		"lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix"
 	},

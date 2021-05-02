@@ -28,7 +28,7 @@
 			"@dao/*": ["src/dao/*"],
 			"@util/*": ["src/util/*"]
 		},
-		"types": ["node"]
+		"types": ["node", "jest"]
 	},
 	"include": ["src/**/*"]
 }
