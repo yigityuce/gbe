@@ -6,11 +6,11 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const config: Configuration = {
 	mode: process.env.NODE_ENV === 'development' ? 'development' : 'production',
 	entry: {
-		server: path.resolve(__dirname, 'src/server.ts'),
+		server: path.resolve(__dirname, 'src/main.ts'),
 	},
 	output: {
 		path: path.resolve(__dirname, 'dist'),
-		filename: 'server.js',
+		filename: 'main.js',
 	},
 	target: 'node',
 	devtool: 'inline-source-map',
@@ -18,6 +18,9 @@ const config: Configuration = {
 	resolve: {
 		plugins: [new TsconfigPathsPlugin()],
 		extensions: ['.ts', '.js', '.json'],
+	},
+	optimization: {
+		minimize: false,
 	},
 	module: {
 		rules: [

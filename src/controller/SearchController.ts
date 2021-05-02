@@ -1,25 +1,33 @@
-import { Controller, Body, Get, Post, ContentType } from 'routing-controllers';
+import { Body, Get, Post, ContentType, JsonController } from 'routing-controllers';
 import { Inject, Service } from 'typedi';
-import { SearchDto } from '@dto/SearchDto';
+import { FilterDto } from '@dto/FilterDto';
 import { SearchService } from '@service/SearchService';
+import { SearchResultDto } from '@dto/SearchResultDto';
+import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
+import { RecordDto } from '@dto/RecordDto';
 
 @Service()
-@Controller('/search')
+@JsonController('/search')
 export class SearchController {
 	@Inject()
 	private readonly searchService: SearchService;
 
 	@Get()
-	async test() {
-		const records = await this.searchService.getAllRecords();
-		console.log(records);
-		return 'This action returns all records';
+	@ContentType('application/json')
+	@ResponseSchema(RecordDto, { isArray: true })
+	async getAll() {
+		return await this.searchService.getAllRecords();
 	}
 
 	@Post()
 	@ContentType('application/json')
-	search(@Body() search: SearchDto) {
-		console.log('search requested:', search);
-		return 'Search requested...';
+	@ResponseSchema(SearchResultDto)
+	@OpenAPI({ description: 'Search records endpoint' })
+	async search(@Body() search: FilterDto) {
+		try {
+			return new SearchResultDto(0, 'Success', await this.searchService.getFilteredRecords(search));
+		} catch (e: any) {
+			return new SearchResultDto();
+		}
 	}
 }
